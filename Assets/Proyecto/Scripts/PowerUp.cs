@@ -5,11 +5,16 @@ using UnityEngine;
 public class PowerUp : MonoBehaviour
 {
     public int cantidad;
-    public float timer;
+    //public float timer;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Player")
+        {
+            collision.gameObject.GetComponent<PlayerController>().IncrementarPuntuacion(cantidad);
+            Destroy(gameObject);
+        }
+        /*if (collision.gameObject.tag == "Player")
         {
             StartCoroutine(Slow(collision));
         }
@@ -25,6 +30,6 @@ public class PowerUp : MonoBehaviour
 
             PlayerController.instance.speed = PlayerController.instance.speedInstance;
             Destroy(gameObject);
-        }
+        }*/
     }
 }

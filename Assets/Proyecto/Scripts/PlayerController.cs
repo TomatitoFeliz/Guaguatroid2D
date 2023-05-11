@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,11 +13,22 @@ public class PlayerController : MonoBehaviour
     bool vulnerable;
     public int vida = 3;
 
+    int puntuacion;
+
+    private float tiempoInicio;
+    public int tiempoNivel;
+    public int tiempoEmpleado;
+
     private Rigidbody2D fisica;
     private SpriteRenderer sprite;
     private Animator animation;
 
+    public Canvas canvas;
+    private ControlHUD hud;
+
     public static PlayerController instance;
+
+    int haGanado;
 
     private void Awake()
     {
@@ -26,11 +38,13 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        tiempoInicio = Time.time;
         vulnerable = true;
         speedInstance = speed;
         fisica = GetComponent<Rigidbody2D>();
         sprite = GetComponent<SpriteRenderer>();
         animation = GetComponent<Animator>();
+        hud = canvas.GetComponent<ControlHUD>();
     }
     private void FixedUpdate()
     {
@@ -48,6 +62,17 @@ public class PlayerController : MonoBehaviour
         else if (fisica.velocity.x < 0) sprite.flipX = true;
 
         animarJugador();
+
+        hud.SetPuntuacion(GameObject.FindGameObjectsWithTag("PowerUp").Length);
+        if (GameObject.FindGameObjectsWithTag("PowerUp").Length == 0)
+        {
+            GanarJuego();
+        }
+
+        tiempoEmpleado = (int)(Time.time - tiempoInicio);
+        hud.SetTiempo(tiempoNivel - tiempoEmpleado);
+
+        if (tiempoNivel - tiempoEmpleado < 0) FinJuego();
     }
 
     private void animarJugador()
@@ -69,21 +94,25 @@ public class PlayerController : MonoBehaviour
             (transform.position + new Vector3(0,-2f,0), Vector2.down, 0.2f);
         return toca.collider != null;
     }
-
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Enemigo")
         {
-            if (vulnerable == true)
+            QuitarVida();
+        }
+    }
+    public void QuitarVida()
+    {
+        if (vulnerable == true)
+        {
+            vulnerable = false;
+            vida--;
+            hud.SetVidas(vida);
+            Invoke("HacerVulnerable", 1f);
+            sprite.color = Color.red;
+            if (vida == 0)
             {
-                vulnerable = false;
-                vida--;
-                Invoke("HacerVulnerable", 2f);
-                sprite.color = Color.red;
-            }        
-            if (vida <= 0)
-            {
-            SceneManager.LoadScene("NVL-1");
+                FinJuego();
             }
         }
     }
@@ -92,5 +121,26 @@ public class PlayerController : MonoBehaviour
     {
         vulnerable = true;
         sprite.color = Color.white;
+    }
+
+    private void GanarJuego()
+    {
+        puntuacion += (vida * 100) + (tiempoNivel - tiempoEmpleado);
+        PlayerPrefs.SetInt("HaGanado", 1);
+        PlayerPrefs.SetInt("Puntuacion", puntuacion);
+        Debug.Log("YOU WIN!!" + puntuacion);
+        SceneManager.LoadScene("FinDePartida");
+    }
+
+    public void FinJuego()
+    {
+        PlayerPrefs.SetInt("HaGanado", 0);
+        SceneManager.LoadScene("FinDePartida");
+    }
+
+    public void IncrementarPuntuacion(int cantidad)
+    {
+        puntuacion += cantidad;
+        Debug.Log(puntuacion);
     }
 }

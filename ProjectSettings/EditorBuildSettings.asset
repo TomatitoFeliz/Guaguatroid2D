@@ -8,4 +8,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Proyecto/Scenes/NVL-1.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/Proyecto/Scenes/Creditos.unity
+    guid: 8b06bd9d168711c438c0dd44e8614019
+  - enabled: 1
+    path: Assets/Proyecto/Scenes/MainMenu.unity
+    guid: 54f443b3563bb7442875782577342e07
+  - enabled: 1
+    path: Assets/Proyecto/Scenes/FinDePartida.unity
+    guid: d87282c69dba5d54f91946f9a1270156
   m_configObjects: {}
