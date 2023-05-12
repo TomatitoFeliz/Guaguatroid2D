@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     public float speed = 10;
     public float speedInstance;
     public float fuerzaImpulso = 5;
+    float movimientoFloat;
 
     bool vulnerable;
     public int vida = 3;
@@ -30,8 +31,16 @@ public class PlayerController : MonoBehaviour
 
     int haGanado;
 
+    public AudioClip saltoSfx;
+    public AudioClip vidaSfx;
+    public AudioClip recolectarSfx;
+    private AudioSource audiosource;
+
+    bool isFalling = false;
+
     private void Awake()
     {
+        audiosource = GetComponent<AudioSource>();
         if (instance == null)
             instance = this;
     }
@@ -49,15 +58,22 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         float horizontal = Input.GetAxis("Horizontal");
+        //fisica.AddForce(Vector2.right * (horizontal * speed), ForceMode2D.Force);
+        movimientoFloat = horizontal;
         fisica.velocity = new Vector2(horizontal * speed, fisica.velocity.y);
     }
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && TocarSuelo())
+        //Salto
+        if (Input.GetKeyDown(KeyCode.Space) && isFalling == false)
         {
+            fisica.velocity = new Vector2(0f, 0f);
             fisica.AddForce(Vector2.up * fuerzaImpulso, ForceMode2D.Impulse);
+            audiosource.PlayOneShot(saltoSfx);
+            isFalling = true;
         }
 
+        //Volteo
         if (fisica.velocity.x > 0) sprite.flipX = false;
         else if (fisica.velocity.x < 0) sprite.flipX = true;
 
@@ -73,11 +89,20 @@ public class PlayerController : MonoBehaviour
         hud.SetTiempo(tiempoNivel - tiempoEmpleado);
 
         if (tiempoNivel - tiempoEmpleado < 0) FinJuego();
+
+        if (fisica.velocity.y == 0)
+        {
+            isFalling = false;
+        }
+        else if (fisica.velocity.y != 0)
+        {
+            isFalling = true;
+        }
     }
 
     private void animarJugador()
     {
-        if (!TocarSuelo()) animation.Play("PlayerJumping");
+        if (isFalling == true) animation.Play("PlayerJumping");
         else if ((fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerRunning");
@@ -88,23 +113,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private bool TocarSuelo()
+    /*private bool TocarSuelo()
     {
         RaycastHit2D toca = Physics2D.Raycast
             (transform.position + new Vector3(0,-2f,0), Vector2.down, 0.2f);
         return toca.collider != null;
-    }
-    private void OnCollisionEnter2D(Collision2D collision)
+    }*/
+
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Enemigo")
         {
             QuitarVida();
         }
     }
+
     public void QuitarVida()
     {
         if (vulnerable == true)
         {
+            audiosource.PlayOneShot(vidaSfx);
             vulnerable = false;
             vida--;
             hud.SetVidas(vida);

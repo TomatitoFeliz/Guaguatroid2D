@@ -11,6 +11,7 @@ public class PowerUp : MonoBehaviour
     {
         if (collision.gameObject.tag == "Player")
         {
+            collision.GetComponent<AudioSource>().PlayOneShot(PlayerController.instance.recolectarSfx);
             collision.gameObject.GetComponent<PlayerController>().IncrementarPuntuacion(cantidad);
             Destroy(gameObject);
         }
