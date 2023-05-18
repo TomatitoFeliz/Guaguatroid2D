@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Enemigo
   - PowerUp
+  - Bala
+  - Mapa
   layers:
   - Default
   - TransparentFX

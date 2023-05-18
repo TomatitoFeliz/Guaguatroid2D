@@ -31,12 +31,21 @@ public class PlayerController : MonoBehaviour
 
     int haGanado;
 
+    float horizontal;
+
     public AudioClip saltoSfx;
     public AudioClip vidaSfx;
     public AudioClip recolectarSfx;
     private AudioSource audiosource;
 
     bool isFalling = false;
+
+    //Disparo:
+    [SerializeField] GameObject disparoPrefab;
+    public int lado;
+    bool isShooting;
+    bool isRunning;
+    float timerDisparo = 0.5f;
 
     private void Awake()
     {
@@ -57,13 +66,15 @@ public class PlayerController : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        float horizontal = Input.GetAxis("Horizontal");
+
         //fisica.AddForce(Vector2.right * (horizontal * speed), ForceMode2D.Force);
         movimientoFloat = horizontal;
         fisica.velocity = new Vector2(horizontal * speed, fisica.velocity.y);
     }
     private void Update()
     {
+        horizontal = Input.GetAxis("Horizontal");
+
         //Salto
         if (Input.GetKeyDown(KeyCode.Space) && isFalling == false)
         {
@@ -74,8 +85,16 @@ public class PlayerController : MonoBehaviour
         }
 
         //Volteo
-        if (fisica.velocity.x > 0) sprite.flipX = false;
-        else if (fisica.velocity.x < 0) sprite.flipX = true;
+        if (fisica.velocity.x > 0)
+        {
+            sprite.flipX = false;
+            lado = 1;
+        }
+        else if (fisica.velocity.x < 0)
+        { 
+            sprite.flipX = true;
+            lado = -1;
+        }
 
         animarJugador();
 
@@ -98,27 +117,44 @@ public class PlayerController : MonoBehaviour
         {
             isFalling = true;
         }
+
+        //Disparo:
+        if (Input.GetKeyUp(KeyCode.LeftShift) == true)
+        {
+            Disparo();
+            isShooting = true;
+        }
+        if (isShooting == true)
+        {
+            timerDisparo -= Time.deltaTime;
+            if (timerDisparo <= 0)
+            {
+                isShooting = false;
+                timerDisparo = 0.5f;
+            }
+        }
     }
 
     private void animarJugador()
     {
         if (isFalling == true) animation.Play("PlayerJumping");
-        else if ((fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
+        else if (isShooting == false && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerRunning");
         }
-        else if ((fisica.velocity.x < 1 || fisica.velocity.x > -1) && fisica.velocity.y == 0)
+        else if (isShooting == false && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerIdle");
         }
+        else if(isShooting == true && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
+        {
+            animation.Play("PlayerShootingWalking");
+        }
+        else if(isShooting == true && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
+        {
+            animation.Play("PlayerShootingIdle");
+        }
     }
-
-    /*private bool TocarSuelo()
-    {
-        RaycastHit2D toca = Physics2D.Raycast
-            (transform.position + new Vector3(0,-2f,0), Vector2.down, 0.2f);
-        return toca.collider != null;
-    }*/
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -170,5 +206,11 @@ public class PlayerController : MonoBehaviour
     {
         puntuacion += cantidad;
         Debug.Log(puntuacion);
+    }
+
+    //Disparo:
+    void Disparo()
+    {
+        Instantiate(disparoPrefab, (Vector2)gameObject.transform.position + Vector2.right * lado, gameObject.transform.rotation);
     }
 }
