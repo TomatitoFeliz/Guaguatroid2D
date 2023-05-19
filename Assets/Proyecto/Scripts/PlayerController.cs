@@ -47,8 +47,15 @@ public class PlayerController : MonoBehaviour
     bool isRunning;
     float timerDisparo = 0.5f;
 
+    //DobleSalto:
+    int saltosRestantes;
+    public int xSaltos = 2;
+
     private void Awake()
     {
+        //DobleSalto:
+        saltosRestantes = xSaltos;
+
         audiosource = GetComponent<AudioSource>();
         if (instance == null)
             instance = this;
@@ -56,6 +63,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1;
         tiempoInicio = Time.time;
         vulnerable = true;
         speedInstance = speed;
@@ -76,12 +84,13 @@ public class PlayerController : MonoBehaviour
         horizontal = Input.GetAxis("Horizontal");
 
         //Salto
-        if (Input.GetKeyDown(KeyCode.Space) && isFalling == false)
+        if (Input.GetKeyDown(KeyCode.Space) && saltosRestantes != 0)
         {
             fisica.velocity = new Vector2(0f, 0f);
             fisica.AddForce(Vector2.up * fuerzaImpulso, ForceMode2D.Impulse);
             audiosource.PlayOneShot(saltoSfx);
             isFalling = true;
+            saltosRestantes--;
         }
 
         //Volteo
@@ -96,7 +105,7 @@ public class PlayerController : MonoBehaviour
             lado = -1;
         }
 
-        animarJugador();
+        AnimarJugador();
 
         hud.SetPuntuacion(GameObject.FindGameObjectsWithTag("PowerUp").Length);
         if (GameObject.FindGameObjectsWithTag("PowerUp").Length == 0)
@@ -119,7 +128,7 @@ public class PlayerController : MonoBehaviour
         }
 
         //Disparo:
-        if (Input.GetKeyUp(KeyCode.LeftShift) == true)
+        if (Input.GetKeyUp(KeyCode.LeftShift) == true && vida! > 0)
         {
             Disparo();
             isShooting = true;
@@ -135,22 +144,32 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void animarJugador()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (isFalling == true) animation.Play("PlayerJumping");
-        else if (isShooting == false && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
+        //DobleSalto:
+        if(collision.gameObject.tag == "Suelo")
+        {
+            fisica.velocity = new Vector2(fisica.velocity.x, 0);
+            saltosRestantes = xSaltos;
+        }
+    }
+
+    private void AnimarJugador()
+    {
+        if (vida !> 0 && isFalling == true) animation.Play("PlayerJumping");
+        else if (vida !> 0 && isShooting == false && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerRunning");
         }
-        else if (isShooting == false && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
+        else if (vida !> 0 && isShooting == false && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerIdle");
         }
-        else if(isShooting == true && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
+        else if(vida !> 0 && isShooting == true && (fisica.velocity.x > 1 || fisica.velocity.x < -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerShootingWalking");
         }
-        else if(isShooting == true && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
+        else if(vida !> 0 && isShooting == true && (fisica.velocity.x < 1 && fisica.velocity.x > -1) && fisica.velocity.y == 0)
         {
             animation.Play("PlayerShootingIdle");
         }
@@ -198,8 +217,23 @@ public class PlayerController : MonoBehaviour
 
     public void FinJuego()
     {
+        StartCoroutine(Death());
+    }
+    IEnumerator Death()
+    {
+        Time.timeScale = 0.5f;
+        speed = 0;
+        fuerzaImpulso = 0;
+        animation.Play("Muerte");
+        fisica.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
+        //fisica.velocity = new Vector2(5, fisica.velocity.y);
+        //fisica.AddForce(new Vector2(1,0) * 40, ForceMode2D.Impulse);
+
+        yield return new WaitForSeconds(1);
+
         PlayerPrefs.SetInt("HaGanado", 0);
         SceneManager.LoadScene("FinDePartida");
+
     }
 
     public void IncrementarPuntuacion(int cantidad)

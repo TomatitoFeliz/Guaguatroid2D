@@ -7,7 +7,8 @@ TagManager:
   - Enemigo
   - PowerUp
   - Bala
-  - Mapa
+  - Suelo
+  - Paredes
   layers:
   - Default
   - TransparentFX
